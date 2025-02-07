@@ -5,23 +5,19 @@ const obtenerObjetos3D = async (req, res) => {
     console.log("🔍 Consultando modelos en la base de datos...");
     try {
         const result = await pool.query('SELECT id, nombre, descripcion FROM objetos_3d');
-        console.log("✅ Modelos obtenidos:", result.rows);
+        
+        const modelos = result.rows.map(row => ({
+            id: row.id,
+            nombre: row.nombre,
+            descripcion: row.descripcion,
+            modelo_url: `http://localhost:3000/api/objetos/${row.id}/modelo`,
+            textura_url: `http://localhost:3000/api/objetos/${row.id}/textura`
+        }));
 
-        // 📌 Verificar si `res` existe antes de llamar `json`
-        if (!res || typeof res.json !== 'function') {
-            throw new Error("❌ El objeto 'res' no está definido o no es una respuesta HTTP válida.");
-        }
-
-        return res.json(result.rows);
+        return res.json(modelos);
     } catch (error) {
         console.error("❌ Error al obtener modelos:", error);
-
-        // 📌 Verificar si `res` está disponible antes de usar `status`
-        if (res && typeof res.status === 'function') {
-            return res.status(500).json({ error: "Error al obtener los modelos desde la base de datos" });
-        } else {
-            throw error; // Si `res` no está definido, lanzar el error para depuración
-        }
+        return res.status(500).json({ error: "Error al obtener los modelos desde la base de datos" });
     }
 };
 
