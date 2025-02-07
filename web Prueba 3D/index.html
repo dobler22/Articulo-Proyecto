@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelos 3D</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Gestión de Modelos 3D</h1>
+
+        <h2>Subir un nuevo modelo</h2>
+        <form id="uploadForm">
+            <input type="text" id="nombre" placeholder="Nombre del modelo" required>
+            <select id="formato">
+                <option value="STL">STL</option>
+                <option value="OBJ">OBJ</option>
+                <option value="FBX">FBX</option>
+                <option value="GLB">GLB</option>
+                <option value="GLTF">GLTF</option>
+            </select>
+            <input type="file" id="archivo" accept=".stl,.obj,.fbx,.glb,.gltf" required>
+            <button type="submit">Subir Modelo</button>
+        </form>
+
+        <h2>Modelos disponibles</h2>
+        <div id="modelosContainer"></div>
+
+    </div>
+
+    <!-- Three.js y Loaders -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r110/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/FBXLoader.js"></script>
+
+    <script src="functions.js"></script>
+</body>
+</html>
+<div id="modelosContainer"></div>
+<script>
+    // Agregar contenedores de render para cada modelo con interacción
+    function agregarRenderIndividual(container, url, formato) {
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, 300 / 300, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(300, 300);
+        container.appendChild(renderer.domElement);
+    
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        camera.position.set(0, 0, 5);
+        controls.update();
+    
+        const light = new THREE.AmbientLight(0x404040);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(1, 1, 1).normalize();
+        scene.add(light);
+        scene.add(directionalLight);
+    
+        const gltfLoader = new THREE.GLTFLoader();
+        const objLoader = new THREE.OBJLoader();
+        const stlLoader = new THREE.STLLoader();
+        const fbxLoader = new THREE.FBXLoader();
+    
+        if (formato === 'GLTF' || formato === 'GLB') {
+            gltfLoader.load(url, function (gltf) {
+                scene.add(gltf.scene);
+                animate();
+            });
+        } else if (formato === 'OBJ') {
+            objLoader.load(url, function (obj) {
+                scene.add(obj);
+                animate();
+            });
+        } else if (formato === 'STL') {
+            stlLoader.load(url, function (geometry) {
+                const material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
+                const mesh = new THREE.Mesh(geometry, material);
+                scene.add(mesh);
+                animate();
+            });
+        } else if (formato === 'FBX') {
+            fbxLoader.load(url, function (fbx) {
+                scene.add(fbx);
+                animate();
+            });
+        }
+    
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+    }
+    
+    function cargarModelos() {
+        fetch('http://localhost:3000/api/modelos')
+            .then(response => response.json())
+            .then(modelos => {
+                const container = document.getElementById('modelosContainer');
+                container.innerHTML = '';
+                modelos.forEach(modelo => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <h3>${modelo.nombre}</h3>
+                        <p>Formato: ${modelo.formato}</p>
+                        <p>Tamaño: ${modelo.tamanio} bytes</p>
+                    `;
+                    const renderContainer = document.createElement('div');
+                    renderContainer.style.width = '300px';
+                    renderContainer.style.height = '300px';
+                    card.appendChild(renderContainer);
+                    container.appendChild(card);
+    
+                    // Obtener URL del archivo para renderizar
+                    fetch(`http://localhost:3000/api/modelos/${modelo.id}`)
+                        .then(res => res.blob())
+                        .then(blob => {
+                            const url = URL.createObjectURL(blob);
+                            agregarRenderIndividual(renderContainer, url, modelo.formato);
+                        });
+                });
+            });
+    }
+    
+    cargarModelos();
+</script>
+    

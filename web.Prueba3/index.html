@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Modelos 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="max-w-4xl mx-auto p-6 bg-white shadow-lg rounded-lg mt-10">
+        <h1 class="text-3xl font-bold text-gray-700 text-center mb-6">Subir y Visualizar Modelos 3D</h1>
+        
+        <h2 class="text-xl font-semibold text-gray-600 mb-4">Subir un nuevo modelo</h2>
+        <form id="uploadForm" class="bg-gray-50 p-4 rounded-lg shadow">
+            <input type="text" id="nombre" placeholder="Nombre del modelo" required class="w-full mb-2 p-2 border rounded-lg">
+            <textarea id="descripcion" placeholder="Descripción" class="w-full mb-2 p-2 border rounded-lg"></textarea>
+            <input type="file" id="modelo_3d" accept=".glb,.gltf,.obj,.stl,.fbx" required class="w-full mb-2 p-2 border rounded-lg">
+            <input type="file" id="textura" accept="image/*" class="w-full mb-2 p-2 border rounded-lg">
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Subir Modelo</button>
+        </form>
+
+        <h2 class="text-xl font-semibold text-gray-600 mt-6">Modelos disponibles</h2>
+        <div id="modelosContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4"></div>
+    </div>
+
+    <!-- Three.js and loaders -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/MTLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/FBXLoader.js"></script>
+    <script src="functions.js"></script>
+</body>
+</html>

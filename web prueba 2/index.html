@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Viewer</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.155.0/examples/jsm/"
+            }
+        }
+    </script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #121212; /* Fondo oscuro */
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">Cargando modelo 3D...</div>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+        import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+        // Escena, cámara y renderizador
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Controles para interactuar con el modelo
+        const controls = new OrbitControls(camera, renderer.domElement);
+
+        // Luz
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(1, 1, 1).normalize();
+        scene.add(light);
+
+        // Luz ambiental para aumentar visibilidad
+        const ambientLight = new THREE.AmbientLight(0x404040, 2);
+        scene.add(ambientLight);
+
+        // Mostrar mensaje de carga
+        const loadingMessage = document.getElementById('loading');
+
+        // Función para cargar diferentes formatos
+        function loadModel(fileName) {
+            if (fileName.endsWith('.glb') || fileName.endsWith('.gltf')) {
+                const gltfLoader = new GLTFLoader();
+                gltfLoader.load(fileName, function (gltf) {
+                    const model = gltf.scene;
+                    model.position.set(0, 0, 0);
+                    model.scale.set(1.5, 1.5, 1.5);
+                    scene.add(model);
+                    adjustCamera(model);
+                }, undefined, function (error) {
+                    console.error('Error cargando GLTF/GLB:', error);
+                    loadingMessage.textContent = 'Error cargando el modelo.';
+                });
+            } else if (fileName.endsWith('.stl')) {
+                const stlLoader = new STLLoader();
+                stlLoader.load(fileName, function (geometry) {
+                    const material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
+                    const model = new THREE.Mesh(geometry, material);
+                    model.position.set(0, 0, 0);
+                    model.scale.set(1.5, 1.5, 1.5);
+                    scene.add(model);
+                    adjustCamera(model);
+                }, undefined, function (error) {
+                    console.error('Error cargando STL:', error);
+                    loadingMessage.textContent = 'Error cargando el modelo.';
+                });
+            } else if (fileName.endsWith('.obj')) {
+                const objLoader = new OBJLoader();
+                objLoader.load(fileName, function (object) {
+                    object.position.set(0, 0, 0);
+                    object.scale.set(1.5, 1.5, 1.5);
+                    scene.add(object);
+                    adjustCamera(object);
+                }, undefined, function (error) {
+                    console.error('Error cargando OBJ:', error);
+                    loadingMessage.textContent = 'Error cargando el modelo.';
+                });
+            } else if (fileName.endsWith('.fbx')) {
+                const fbxLoader = new FBXLoader();
+                fbxLoader.load(fileName, function (object) {
+                    object.position.set(0, 0, 0);
+                    object.scale.set(1.5, 1.5, 1.5);
+                    scene.add(object);
+                    adjustCamera(object);
+                }, undefined, function (error) {
+                    console.error('Error cargando FBX:', error);
+                    loadingMessage.textContent = 'Error cargando el modelo.';
+                });
+            } else {
+                console.error('Formato no soportado:', fileName);
+                loadingMessage.textContent = 'Formato no soportado.';
+            }
+        }
+
+        // Ajustar la cámara al modelo
+        function adjustCamera(model) {
+            const box = new THREE.Box3().setFromObject(model);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+            controls.target.copy(center);
+            controls.update();
+
+            const size = box.getSize(new THREE.Vector3());
+            camera.position.set(center.x, center.y, center.z + size.z * 2);
+
+            // Ocultar mensaje de carga
+            loadingMessage.style.display = 'none';
+        }
+
+        // Llamar a la función para cargar un archivo (puedes cambiar el nombre aquí)
+        loadModel('base.obj'); // Cambia a 'archivo.obj' o 'archivo.fbx' para probar otros formatos
+
+        // Animación de la escena
+        const animate = function () {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        };
+
+        animate();
+
+        // Ajustar tamaño al redimensionar ventana
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+    </script>
+</body>
+</html>
